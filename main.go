@@ -8,7 +8,7 @@ import (
 	"github.com/taiwer/miner/common/logger"
 	"github.com/taiwer/miner/common/rbacModel"
 	"github.com/taiwer/miner/common/settings"
-	"github.com/taiwer/miner/models/seckill"
+	"github.com/taiwer/miner/models/jdSeckill"
 	"github.com/taiwer/miner/routers"
 	"go.uber.org/zap"
 	"log"
@@ -71,7 +71,7 @@ func main() {
 	}
 	router.Use(logger.GinLogger(), logger.GinRecovery(true))
 	go s.ListenAndServe()
-	seckill.RunSeckill()
+	jdSeckill.RunSeckill()
 	select {}
 	log.Println("exit")
 }

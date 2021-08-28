@@ -32,7 +32,7 @@ func init() {
 		return http.ErrUseLastResponse
 	})
 	//配置文件初始化
-	confFile := "./jd_seckill_conf.ini"
+	confFile := "./conf/jd_seckill_conf.ini"
 	if !seckill.Exists(confFile) {
 		log.Println("配置文件不存在，程序退出")
 		os.Exit(0)
