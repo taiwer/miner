@@ -3,11 +3,11 @@ package adminController
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/taiwer/miner/common/codes"
+	"github.com/taiwer/miner/common/dbPlotOpr"
+	"github.com/taiwer/miner/controller/baseController"
+	"github.com/taiwer/miner/models/httpMaster"
 	"go.uber.org/zap"
-	"goplot/common/codes"
-	"goplot/common/dbPlotOpr"
-	"goplot/controller/baseController"
-	"goplot/models/httpMaster"
 	"net/http"
 	"strconv"
 )

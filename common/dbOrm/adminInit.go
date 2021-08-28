@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"goplot/common/settings"
+	"github.com/taiwer/miner/common/settings"
 	"log"
 	// import _ "github.com/jinzhu/gorm/dialects/postgres"
 	// import _ "github.com/jinzhu/gorm/dialects/sqlite"

@@ -2,8 +2,8 @@ package dbPlotOpr
 
 import (
 	"fmt"
+	"github.com/taiwer/miner/common/dbOrm"
 	"go.uber.org/zap"
-	"goplot/common/dbOrm"
 )
 
 //节点表
@@ -31,8 +31,6 @@ func (s *PlotKey) InserTodb(args map[string]interface{}) (int64, error) {
 func AddPlotKey(u *PlotKey, args map[string]interface{}) (int64, error) {
 	return dbOrm.Add(u)
 }
-
-
 
 func DelPlotKeyById(id int64) (int64, error) {
 	where := fmt.Sprintf("id='%d'", id)

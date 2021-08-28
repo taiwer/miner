@@ -2,13 +2,12 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"goplot/common/middleware/cors"
-	"goplot/common/middleware/jwt"
-	"goplot/common/settings"
-	"goplot/controller"
-	"goplot/controller/adminController"
-	"goplot/controller/plotController"
-	"goplot/controller/staticController"
+	"github.com/taiwer/miner/common/middleware/cors"
+	"github.com/taiwer/miner/common/middleware/jwt"
+	"github.com/taiwer/miner/common/settings"
+	"github.com/taiwer/miner/controller"
+	"github.com/taiwer/miner/controller/adminController"
+	"github.com/taiwer/miner/controller/staticController"
 )
 
 //InitRouter 初始化Router
@@ -27,11 +26,6 @@ func Configure(r *gin.Engine) {
 	//controller declare
 	var cUser controller.User
 	var cGlobal adminController.GlobalListController
-	var cPlotPc plotController.PlotPcController
-	var cPlotPcUser plotController.PlotUserPcController
-	var cPlotKey plotController.PlotKeyController
-	var cPlotKeyUser plotController.PlotKeyUserController
-	var cPlotDisk plotController.PlotDiskController
 
 	var cDownLoad staticController.DownLoadController
 	var cUpLoadFile adminController.UpLoadFileController
@@ -63,38 +57,6 @@ func Configure(r *gin.Engine) {
 		apiv1.POST("/user", cUser.AddUser)
 		apiv1.PUT("/user", cUser.UpdateUser)
 		apiv1.DELETE("/user/:id", cUser.DeleteUser)
-
-		apiv1.POST("/ploter/command", cPlotPc.Command)
-		apiv1.POST("/ploter/create", cPlotPc.Create)
-		apiv1.DELETE("/ploter/del:id", cPlotPc.Del)
-		apiv1.PUT("/ploter/update", cPlotPc.Update)
-		apiv1.GET("/ploter/list", cPlotPc.List)
-
-		apiv1.POST("/ploter_user/command", cPlotPcUser.Command)
-		apiv1.POST("/ploter_user/create", cPlotPcUser.Create)
-		apiv1.DELETE("/ploter_user/del:id", cPlotPcUser.Del)
-		apiv1.PUT("/ploter_user/update", cPlotPcUser.Update)
-		apiv1.GET("/ploter_user/list", cPlotPcUser.List)
-
-		apiv1.POST("/plot_disk/command", cPlotDisk.Command)
-		apiv1.POST("/plot_disk/create", cPlotDisk.Create)
-		apiv1.DELETE("/plot_disk/del:id", cPlotDisk.Del)
-		apiv1.PUT("/plot_disk/update", cPlotDisk.Update)
-		apiv1.GET("/plot_disk/list", cPlotDisk.List)
-
-		apiv1.POST("/plot_key/command", cPlotKey.Command)
-		apiv1.POST("/plot_key/create", cPlotKey.Create)
-		apiv1.DELETE("/plot_key/del:id", cPlotKey.Del)
-		apiv1.PUT("/plot_key/update", cPlotKey.Update)
-		apiv1.GET("/plot_key/list", cPlotKey.List)
-		apiv1.GET("/plot_key/list_select", cPlotKey.ListSelect)
-
-		apiv1.POST("/plot_key_user/command", cPlotKeyUser.Command)
-		apiv1.POST("/plot_key_user/create", cPlotKeyUser.Create)
-		apiv1.DELETE("/plot_key_user/del:id", cPlotKeyUser.Del)
-		apiv1.PUT("/plot_key_user/update", cPlotKeyUser.Update)
-		apiv1.GET("/plot_key_user/list", cPlotKeyUser.List)
-		apiv1.GET("/plot_key_user/list_select", cPlotKeyUser.ListSelect)
 
 		apiv1.POST("/global/command", cGlobal.Command)
 		apiv1.POST("/global/create", cGlobal.Create)

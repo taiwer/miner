@@ -2,8 +2,8 @@ package rbacModel
 
 import (
 	"fmt"
+	"github.com/taiwer/miner/common/dbOrm"
 	"go.uber.org/zap"
-	"goplot/common/dbOrm"
 )
 
 //分组表

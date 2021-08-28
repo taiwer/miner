@@ -1,7 +1,7 @@
 package dbPlotOpr
 
 import (
-	"goplot/common/dbOrm"
+	"github.com/taiwer/miner/common/dbOrm"
 	"log"
 	//"github.com/astaxie/beego/validation"
 )

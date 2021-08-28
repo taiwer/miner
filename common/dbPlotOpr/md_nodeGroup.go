@@ -2,8 +2,8 @@ package dbPlotOpr
 
 import (
 	"fmt"
+	"github.com/taiwer/miner/common/dbOrm"
 	"go.uber.org/zap"
-	"goplot/common/dbOrm"
 	"math/rand"
 	//"github.com/astaxie/beego/validation"
 )

@@ -2,7 +2,7 @@ package dbPlotOpr
 
 import (
 	"fmt"
-	"goplot/common/dbOrm"
+	"github.com/taiwer/miner/common/dbOrm"
 	"log"
 	"time"
 	//"github.com/astaxie/beego/validation"

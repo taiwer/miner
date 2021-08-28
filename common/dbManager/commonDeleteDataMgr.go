@@ -2,9 +2,9 @@ package dbManager
 
 import (
 	"fmt"
+	"github.com/taiwer/miner/common/dbOrm"
+	"github.com/taiwer/miner/common/dbPlotOpr"
 	"go.uber.org/zap"
-	"goplot/common/dbOrm"
-	"goplot/common/dbPlotOpr"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package dbManager
 
 import (
-	"goplot/common/dbPlotOpr"
+	"github.com/taiwer/miner/common/dbPlotOpr"
 	"time"
 )
 

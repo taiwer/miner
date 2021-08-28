@@ -2,11 +2,11 @@ package baseController
 
 import (
 	"fmt"
-	jwt "goplot/common/middleware/jwt"
+	jwt "github.com/taiwer/miner/common/middleware/jwt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"goplot/common/codes"
+	"github.com/taiwer/miner/common/codes"
 )
 
 //ResponseData 数据返回结构体

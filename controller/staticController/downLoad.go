@@ -2,9 +2,9 @@ package staticController
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/taiwer/miner/common/dbPlotOpr"
+	"github.com/taiwer/miner/controller/baseController"
 	"go.uber.org/zap"
-	"goplot/common/dbPlotOpr"
-	"goplot/controller/baseController"
 	"io/ioutil"
 	"net/http"
 	"path"
