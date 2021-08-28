@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Albert-Zhan/httpc"
-	"github.com/taiwer/miner/models/jdSeckill/conf"
 	"github.com/tidwall/gjson"
 	"log"
 	"net/http"
@@ -13,16 +12,7 @@ import (
 	"time"
 )
 
-type User struct {
-	client *httpc.HttpClient
-	conf   *conf.Config
-}
-
-func NewUser(client *httpc.HttpClient, conf *conf.Config) *User {
-	return &User{client: client, conf: conf}
-}
-
-func (this *User) loginPage() {
+func (this *Seckill) loginPage() {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Connection", "keep-alive")
@@ -30,7 +20,7 @@ func (this *User) loginPage() {
 	_, _, _ = req.SetUrl("https://passport.jd.com/new/login.aspx").SetMethod("get").Send().End()
 }
 
-func (this *User) QrLogin() (string, error) {
+func (this *Seckill) QrLogin() (string, error) {
 	//登录页面
 	this.loginPage()
 	//二维码登录
@@ -56,7 +46,7 @@ func (this *User) QrLogin() (string, error) {
 	return wlfstkSmdl, nil
 }
 
-func (this *User) QrcodeTicket(wlfstkSmdl string) (string, error) {
+func (this *Seckill) QrcodeTicket(wlfstkSmdl string) (string, error) {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://passport.jd.com/new/login.aspx")
@@ -73,7 +63,7 @@ func (this *User) QrcodeTicket(wlfstkSmdl string) (string, error) {
 	return gjson.Get(body, "ticket").String(), nil
 }
 
-func (this *User) TicketInfo(ticket string) (string, error) {
+func (this *Seckill) TicketInfo(ticket string) (string, error) {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://passport.jd.com/uc/login?ltype=logout")
@@ -91,7 +81,7 @@ func (this *User) TicketInfo(ticket string) (string, error) {
 	}
 }
 
-func (this *User) RefreshStatus() error {
+func (this *Seckill) RefreshStatus() error {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	resp, _, err := req.SetUrl("https://order.jd.com/center/list.action?rid=" + strconv.Itoa(int(time.Now().Unix()*1000))).SetMethod("get").Send().End()
@@ -102,7 +92,7 @@ func (this *User) RefreshStatus() error {
 	}
 }
 
-func (this *User) GetUserInfo() (string, error) {
+func (this *Seckill) GetUserInfo() (string, error) {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://order.jd.com/center/list.action")

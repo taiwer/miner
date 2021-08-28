@@ -48,12 +48,13 @@ func RunSeckill() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//用户登录
-	user := seckill.NewUser(client, config)
+	user := seckill.NewSeckill(client, config)
 	wlfstkSmdl, err := user.QrLogin()
 	if err != nil {
 		os.Exit(0)
 	}
 	ticket := ""
+	//等待登录
 	for {
 		ticket, err = user.QrcodeTicket(wlfstkSmdl)
 		if err == nil && ticket != "" {
@@ -71,6 +72,11 @@ func RunSeckill() {
 			//开始预约,预约过的就重复预约
 			seckill := seckill.NewSeckill(client, config)
 			seckill.MakeReserve()
+			//获取预约商品列表
+			text, err := seckill.GetReserveList()
+			log.Println("预约商品列表")
+			log.Println(text, err)
+			log.Println("预约商品列表===============")
 			//等待抢购/开始抢购
 			nowLocalTime := time.Now().UnixNano() / 1e6
 			jdTime, _ := getJdTime()

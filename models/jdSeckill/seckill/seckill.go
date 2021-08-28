@@ -27,6 +27,8 @@ func NewSeckill(client *httpc.HttpClient, conf *conf.Config) *Seckill {
 func (this *Seckill) SkuTitle() (string, error) {
 	skuId := this.conf.Read("config", "sku_id")
 	req := httpc.NewRequest(this.client)
+	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
+	req.SetHeader("Referer", "https://order.jd.com/center/list.action")
 	resp, body, err := req.SetUrl(fmt.Sprintf("https://item.jd.com/%s.html", skuId)).SetMethod("get").Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("访问商品详情失败")
@@ -83,8 +85,7 @@ func (this *Seckill) getSeckillUrl() (string, error) {
 }
 
 func (this *Seckill) RequestSeckillUrl() {
-	user := NewUser(this.client, this.conf)
-	userInfo, err := user.GetUserInfo()
+	userInfo, err := this.GetUserInfo()
 	if err != nil {
 		log.Println("获取用户信息失败")
 	} else {
