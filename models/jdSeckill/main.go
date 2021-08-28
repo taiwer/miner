@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Albert-Zhan/httpc"
 	"github.com/taiwer/miner/models/jdSeckill/conf"
-	"github.com/taiwer/miner/models/jdSeckill/jdSeckill"
+	"github.com/taiwer/miner/models/jdSeckill/seckill"
 	"github.com/tidwall/gjson"
 	"log"
 	"net/http"
@@ -33,7 +33,7 @@ func init() {
 	})
 	//配置文件初始化
 	confFile := "./jd_seckill_conf.ini"
-	if !jdSeckill.Exists(confFile) {
+	if !seckill.Exists(confFile) {
 		log.Println("配置文件不存在，程序退出")
 		os.Exit(0)
 	}
@@ -48,7 +48,7 @@ func RunSeckill() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//用户登录
-	user := jdSeckill.NewUser(client, config)
+	user := seckill.NewUser(client, config)
 	wlfstkSmdl, err := user.QrLogin()
 	if err != nil {
 		os.Exit(0)
@@ -69,7 +69,7 @@ func RunSeckill() {
 			userInfo, _ := user.GetUserInfo()
 			log.Println("用户:" + userInfo)
 			//开始预约,预约过的就重复预约
-			seckill := jdSeckill.NewSeckill(client, config)
+			seckill := seckill.NewSeckill(client, config)
 			seckill.MakeReserve()
 			//等待抢购/开始抢购
 			nowLocalTime := time.Now().UnixNano() / 1e6
@@ -106,12 +106,12 @@ func getJdTime() (int64, error) {
 	return gjson.Get(body, "serverTime").Int(), nil
 }
 
-func start(seckill *jdSeckill.Seckill, taskNum int) {
+func start(sk *seckill.Seckill, taskNum int) {
 	for i := 1; i <= taskNum; i++ {
-		go func(seckill *jdSeckill.Seckill) {
+		go func(seckill *seckill.Seckill) {
 			seckill.RequestSeckillUrl()
 			seckill.SeckillPage()
 			seckill.SubmitSeckillOrder()
-		}(seckill)
+		}(sk)
 	}
 }

@@ -1,7 +1,7 @@
 package email
 
 import (
-	"github.com/taiwer/miner/models/jdSeckill/conf"
+	"github.com/taiwer/miner/models/seckill/conf"
 	"gopkg.in/gomail.v2"
 	"strconv"
 )

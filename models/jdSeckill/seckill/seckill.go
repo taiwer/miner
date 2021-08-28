@@ -1,4 +1,4 @@
-package jdSeckill
+package seckill
 
 import (
 	"errors"
