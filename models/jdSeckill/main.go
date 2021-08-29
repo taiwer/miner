@@ -18,9 +18,7 @@ import (
 var client *httpc.HttpClient
 
 var cookieJar *httpc.CookieJar
-
 var config *conf.Config
-
 var wg *sync.WaitGroup
 
 func init() {
@@ -39,7 +37,6 @@ func init() {
 	}
 	config = &conf.Config{}
 	config.InitConfig(confFile)
-
 	wg = new(sync.WaitGroup)
 	wg.Add(1)
 }
@@ -48,57 +45,64 @@ func RunSeckill() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//用户登录
-	user := seckill.NewSeckill(client, config)
-	wlfstkSmdl, err := user.QrLogin()
-	if err != nil {
-		os.Exit(0)
-	}
-	ticket := ""
-	//等待登录
-	for {
-		ticket, err = user.QrcodeTicket(wlfstkSmdl)
-		if err == nil && ticket != "" {
-			break
+	user := seckill.NewSeckill()
+
+	user.LoadCookie("") //jd189806cks
+	unick, _ := user.GetUserInfo()
+	if unick == "" {
+		wlfstkSmdl, err := user.QrLogin()
+		if err != nil {
+			os.Exit(0)
 		}
-		time.Sleep(2 * time.Second)
-	}
-	_, err = user.TicketInfo(ticket)
-	if err == nil {
-		log.Println("登录成功")
-		//刷新用户状态和获取用户信息
-		if status := user.RefreshStatus(); status == nil {
-			userInfo, _ := user.GetUserInfo()
-			log.Println("用户:" + userInfo)
-			//开始预约,预约过的就重复预约
-			seckill := seckill.NewSeckill(client, config)
-			seckill.MakeReserve()
-			//获取预约商品列表
-			text, err := seckill.GetReserveList()
-			log.Println("预约商品列表")
-			log.Println(text, err)
-			log.Println("预约商品列表===============")
-			//等待抢购/开始抢购
-			nowLocalTime := time.Now().UnixNano() / 1e6
-			jdTime, _ := getJdTime()
-			buyDate := config.Read("config", "buy_time")
-			loc, _ := time.LoadLocation("Local")
-			t, _ := time.ParseInLocation("2006-01-02 15:04:05", buyDate, loc)
-			buyTime := t.UnixNano() / 1e6
-			diffTime := nowLocalTime - jdTime
-			log.Println(fmt.Sprintf("正在等待到达设定时间:%s，检测本地时间与京东服务器时间误差为【%d】毫秒", buyDate, diffTime))
-			timerTime := (buyTime + diffTime) - jdTime
-			if timerTime <= 0 {
-				log.Println("请设置抢购时间")
-				os.Exit(0)
+		ticket := ""
+		//等待登录
+		for {
+			ticket, err = user.QrcodeTicket(wlfstkSmdl)
+			if err == nil && ticket != "" {
+				break
 			}
-			time.Sleep(time.Duration(timerTime) * time.Millisecond)
-			//开启任务
-			log.Println("时间到达，开始执行……")
-			start(seckill, 5)
-			wg.Wait()
+			time.Sleep(2 * time.Second)
 		}
-	} else {
-		log.Println("登录失败")
+		_, err = user.TicketInfo(ticket)
+		if err != nil {
+			log.Println("登录失败")
+			return
+		}
+	}
+
+	log.Println("登录成功")
+	//刷新用户状态和获取用户信息
+	if status := user.RefreshStatus(); status == nil {
+		userInfo, _ := user.GetUserInfo()
+		log.Println("用户:" + userInfo)
+		//开始预约,预约过的就重复预约
+		seckill := user
+		seckill.MakeReserve()
+		//获取预约商品列表
+		text, err := seckill.GetReserveList()
+		log.Println("预约商品列表")
+		fmt.Println(text)
+		log.Println(err)
+		log.Println("预约商品列表===============")
+		//等待抢购/开始抢购
+		nowLocalTime := time.Now().UnixNano() / 1e6
+		jdTime, _ := getJdTime()
+		buyDate := config.Read("config", "buy_time")
+		loc, _ := time.LoadLocation("Local")
+		t, _ := time.ParseInLocation("2006-01-02 15:04:05", buyDate, loc)
+		buyTime := t.UnixNano() / 1e6
+		diffTime := nowLocalTime - jdTime
+		log.Println(fmt.Sprintf("正在等待到达设定时间:%s，检测本地时间与京东服务器时间误差为【%d】毫秒", buyDate, diffTime))
+		timerTime := (buyTime + diffTime) - jdTime
+		if timerTime <= 0 {
+			log.Println("请设置抢购时间")
+			os.Exit(0)
+		}
+		//time.Sleep(time.Duration(timerTime) * time.Millisecond)
+		//开启任务
+		log.Println("时间到达，开始执行……")
+		start(seckill, 5)
+		wg.Wait()
 	}
 }
 
@@ -115,9 +119,10 @@ func getJdTime() (int64, error) {
 func start(sk *seckill.Seckill, taskNum int) {
 	for i := 1; i <= taskNum; i++ {
 		go func(seckill *seckill.Seckill) {
-			seckill.RequestSeckillUrl()
-			seckill.SeckillPage()
-			seckill.SubmitSeckillOrder()
+			if seckill.RequestSeckillUrl() {
+				seckill.SeckillPage()
+				seckill.SubmitSeckillOrder()
+			}
 		}(sk)
 	}
 }

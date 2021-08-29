@@ -16,8 +16,10 @@ import (
 //预约商品
 
 type ProductInfo struct {
-	Title string
-	Price string
+	Title    string
+	Price    string
+	DownTime string //抢购时间
+	DownGo   string //抢购距离
 }
 
 func (s *Seckill) GetHttpHtmlContent(url string, selector string, sel interface{}) (string, error) {
@@ -68,7 +70,7 @@ func (s *Seckill) GetHttpHtmlContent(url string, selector string, sel interface{
 
 //获取预约商品列表
 func (s *Seckill) GetReserveList() (string, error) {
-	s.GetHttpHtmlContent("https://yushou.jd.com/member/qualificationList.action", "body", `document.querySelector("body")`)
+	//s.GetHttpHtmlContent("https://yushou.jd.com/member/qualificationList.action", "body", `document.querySelector("body")`)
 	req := httpc.NewRequest(s.client)
 	req.SetHeader("User-Agent", s.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://order.jd.com/center/list.action")
@@ -84,17 +86,21 @@ func (s *Seckill) GetReserveList() (string, error) {
 	doc, _ := goquery.NewDocumentFromReader(html)
 	elem := doc.Find(".cont-box")
 	itemList := make([]string, 0)
-	itemList = append(itemList, "")
 	for k, node := range elem.Nodes {
 		var productInfo ProductInfo
 		product := goquery.NewDocumentFromNode(node).Find(".product-info")
 		//nPrice :=product.Find(".prod-price")
-		productInfo.Price = elem.Text()
+		//productInfo.Price = elem.Text()
 		productInfo.Title = product.Find(".prod-title").Text()
+		//<input type="hidden" id="100011553443_buystime" value="2021-08-31 15:00:00">
+		//<input type="hidden" id="100011553443_buyetime" value="2021-08-31 17:00:00">
+		productInfo.DownTime = product.Find(".down-time").Text()
+		productInfo.DownGo = product.Find(".down-go").Text()
 
-		text := fmt.Sprintf("%d 商品名称:[%s] price:[%s]", k, productInfo.Title, productInfo.Price)
+		text := fmt.Sprintf("%d 商品名称:[%s] price:[%s] Time:[%s]Go:[%s]", k,
+			productInfo.Title, productInfo.Price, productInfo.DownTime, productInfo.DownGo)
 		itemList = append(itemList, text)
 	}
-	text := strings.Join(itemList, "\n")
+	text := "\n" + strings.Join(itemList, "\n")
 	return strings.TrimSpace(text), nil
 }

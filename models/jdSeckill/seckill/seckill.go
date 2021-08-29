@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Albert-Zhan/httpc"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/taiwer/miner/models/jdSeckill/conf"
 	"github.com/taiwer/miner/models/jdSeckill/email"
 	"github.com/tidwall/gjson"
 	"log"
@@ -16,12 +15,13 @@ import (
 )
 
 type Seckill struct {
-	client *httpc.HttpClient
-	conf   *conf.Config
+	Request
 }
 
-func NewSeckill(client *httpc.HttpClient, conf *conf.Config) *Seckill {
-	return &Seckill{client: client, conf: conf}
+func NewSeckill() *Seckill {
+	seckill := &Seckill{}
+	seckill.Request.Init()
+	return seckill
 }
 
 func (this *Seckill) SkuTitle() (string, error) {
@@ -29,7 +29,8 @@ func (this *Seckill) SkuTitle() (string, error) {
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://order.jd.com/center/list.action")
-	resp, body, err := req.SetUrl(fmt.Sprintf("https://item.jd.com/%s.html", skuId)).SetMethod("get").Send().End()
+	req.SetUrl(fmt.Sprintf("https://item.jd.com/%s.html", skuId)).SetMethod("get")
+	resp, body, err := req.Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("访问商品详情失败")
 		return "", errors.New("访问商品详情失败")
@@ -62,12 +63,14 @@ func (this *Seckill) MakeReserve() {
 }
 
 func (this *Seckill) getSeckillUrl() (string, error) {
+	log.Println("获取秒杀Url")
 	skuId := this.conf.Read("config", "sku_id")
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Host", "itemko.jd.com")
 	req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
-	resp, body, err := req.SetUrl("https://itemko.jd.com/itemShowBtn?callback=jQuery{}" + strconv.Itoa(Rand(1000000, 9999999)) + "&skuId=" + skuId + "&from=pc&_=" + strconv.Itoa(int(time.Now().Unix()*1000))).SetMethod("get").Send().End()
+	req.SetUrl("https://itemko.jd.com/itemShowBtn?callback=jQuery{}" + strconv.Itoa(Rand(1000000, 9999999)) + "&skuId=" + skuId + "&from=pc&_=" + strconv.Itoa(int(time.Now().Unix()*1000))).SetMethod("get")
+	resp, body, err := req.Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("抢购链接获取失败，稍后自动重试")
 		return "", errors.New("抢购链接获取失败，稍后自动重试")
@@ -84,7 +87,7 @@ func (this *Seckill) getSeckillUrl() (string, error) {
 	return url, nil
 }
 
-func (this *Seckill) RequestSeckillUrl() {
+func (this *Seckill) RequestSeckillUrl() bool {
 	userInfo, err := this.GetUserInfo()
 	if err != nil {
 		log.Println("获取用户信息失败")
@@ -98,12 +101,16 @@ func (this *Seckill) RequestSeckillUrl() {
 		log.Println("商品名称:" + shopTitle)
 	}
 	url, _ := this.getSeckillUrl()
-	skuId := this.conf.Read("config", "sku_id")
-	req := httpc.NewRequest(this.client)
-	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
-	req.SetHeader("Host", "marathon.jd.com")
-	req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
-	_, _, _ = req.SetUrl(url).SetMethod("get").Send().End()
+	if url != "" {
+		skuId := this.conf.Read("config", "sku_id")
+		req := httpc.NewRequest(this.client)
+		req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
+		req.SetHeader("Host", "marathon.jd.com")
+		req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
+		_, _, _ = req.SetUrl(url).SetMethod("get").Send().End()
+		return true
+	}
+	return false
 }
 
 func (this *Seckill) SeckillPage() {
@@ -114,7 +121,8 @@ func (this *Seckill) SeckillPage() {
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Host", "marathon.jd.com")
 	req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
-	_, _, _ = req.SetUrl("https://marathon.jd.com/seckill/seckill.action?skuId=" + skuId + "&num=" + seckillNum + "&rid=" + strconv.Itoa(int(time.Now().Unix()))).SetMethod("get").Send().End()
+	req.SetUrl("https://marathon.jd.com/seckill/seckill.action?skuId=" + skuId + "&num=" + seckillNum + "&rid=" + strconv.Itoa(int(time.Now().Unix()))).SetMethod("get")
+	_, _, _ = req.Send().End()
 }
 
 func (this *Seckill) SeckillInitInfo() (string, error) {
@@ -127,7 +135,8 @@ func (this *Seckill) SeckillInitInfo() (string, error) {
 	req.SetParam("sku", skuId)
 	req.SetParam("num", seckillNum)
 	req.SetParam("isModifyAddress", "false")
-	resp, body, err := req.SetUrl("https://marathon.jd.com/seckillnew/orderService/pc/init.action").SetMethod("post").Send().End()
+	req.SetUrl("https://marathon.jd.com/seckillnew/orderService/pc/init.action").SetMethod("post")
+	resp, body, err := req.Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("初始化秒杀信息失败")
 		return "", errors.New("初始化秒杀信息失败")
