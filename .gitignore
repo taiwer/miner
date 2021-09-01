@@ -17,3 +17,5 @@
 go.sum
 main
 log
+static/qrimg
+vue-admin/node_modules
