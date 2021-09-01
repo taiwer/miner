@@ -33,6 +33,7 @@ func Configure(r *gin.Engine) {
 	var cUpLoadFile adminController.UpLoadFileController
 
 	var cJdMiaoshaList jdController.MiaoShaListController
+	var cJdPanicBuyingList jdController.PanicBuyingListController
 	//var tag cv1.Tag
 	var myjwt jwt.JWT
 	//inject declare
@@ -83,5 +84,11 @@ func Configure(r *gin.Engine) {
 		apiv1.DELETE("/jd/miaosha_list/del:id", cJdMiaoshaList.Del)
 		apiv1.PUT("/jd/miaosha_list/update", cJdMiaoshaList.Update)
 		apiv1.GET("/jd/miaosha_list/list", cJdMiaoshaList.List)
+
+		apiv1.POST("/jd/panic_buying_list/command", cJdPanicBuyingList.Command)
+		apiv1.POST("/jd/panic_buying_list/create", cJdPanicBuyingList.Create)
+		apiv1.DELETE("/jd/panic_buying_list/del:id", cJdPanicBuyingList.Del)
+		apiv1.PUT("/jd/panic_buying_list/update", cJdPanicBuyingList.Update)
+		apiv1.GET("/jd/panic_buying_list/list", cJdPanicBuyingList.List)
 	}
 }

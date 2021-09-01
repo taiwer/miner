@@ -5,18 +5,35 @@
         <el-col :span="4">
           <span>{{ editData.id }}</span>
         </el-col>
+        <el-col class="line" :span="2"> 用户名</el-col>
+        <el-col :span="4">
+          <span>{{ editData.user_name }}</span>
+        </el-col>
       </el-form-item>
-      <el-form-item label="名称" prop="title">
+      <el-form-item label="物品Id" prop="title">
         <el-col :span="4">
-          <el-input v-model="editData.name" />
+          <el-input v-model="editData.item_id" />
         </el-col>
-        <el-col class="line" :span="2"> 值</el-col>
+        <el-col class="line" :span="2"> 物品名称</el-col>
         <el-col :span="4">
-          <el-input v-model="editData.val" />
+          <el-input v-model="editData.item_name" />
         </el-col>
-        <el-col class="line" :span="2">文本值</el-col>
+        <el-col class="line" :span="2">抢购数量</el-col>
         <el-col :span="4">
-          <el-input v-model="editData.text" />
+          <el-input v-model="editData.num" />
+        </el-col>
+      </el-form-item>
+      <el-form-item label="价格限制" prop="title">
+        <el-col :span="4">
+          <el-input v-model="editData.limit_price" />
+        </el-col>
+        <el-col class="line" :span="2"> 开始时间</el-col>
+        <el-col :span="4">
+          <el-input v-model="editData.start_at" />
+        </el-col>
+        <el-col class="line" :span="2">结束时间</el-col>
+        <el-col :span="4">
+          <el-input v-model="editData.stop_at" />
         </el-col>
       </el-form-item>
       <el-form-item label="描述">
@@ -35,7 +52,7 @@
 </template>
 
 <script>
-import Command from '@/api/plot/globalSetting'
+import Command from '@/api/jdseckill/panicBuyingList'
 import { Message } from 'element-ui'
 
 export default {
@@ -82,7 +99,7 @@ export default {
     createData () {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          Command.create(this.editData).then(response =>  {
+          Command.create(this.editData).then( response =>  {
             Message.info("createData "+response.data)
             console.log('createData ', response)
             this.$emit('reLoadList')

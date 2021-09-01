@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import Command from '@/api/jdseckill/miaoshaList'
+import Command from '@/api/jdseckill/panicBuyingList'
 import { Message } from 'element-ui'
 import ComplexTable from '@/views/goplot/components/complex-table'
 import Setting from './setting'
@@ -92,11 +92,11 @@ export default {
       editData: {}, // 编辑数据
       activeName: 'tb-data',
       editModeEnabled: true,
-      getList: undefined, // Command.get_list,
+      getList: Command.get_list,
       tableData: [],
       columns: [
         {
-          field: 'wareId',
+          field: 'id',
           title: 'Id',
           width: 180,
           align: 'center',
@@ -107,8 +107,8 @@ export default {
           }
         },
         {
-          field: 'shortWname',
-          title: '短名称',
+          field: 'user_name',
+          title: 'user_name',
           width: 180,
           align: 'center',
           valign: 'middle',
@@ -117,8 +117,18 @@ export default {
           }
         },
         {
-          field: 'jdPrice',
-          title: 'jdPrice',
+          field: 'item_id',
+          title: 'item_id',
+          width: 180,
+          align: 'center',
+          valign: 'middle',
+          formatter: function (value, row, index) {
+            return value
+          }
+        },
+        {
+          field: 'item_name',
+          title: 'item_name',
           min_width: 20,
           align: 'center',
           valign: 'middle',
@@ -127,8 +137,8 @@ export default {
           }
         },
         {
-          field: 'miaoShaPrice',
-          title: 'MiaoShaPrice',
+          field: 'num',
+          title: 'num',
           min_width: 20,
           align: 'center',
           valign: 'middle',
@@ -137,8 +147,8 @@ export default {
           }
         },
         {
-          field: 'canBuy',
-          title: 'canBuy',
+          field: 'limit_price',
+          title: 'limit_price',
           min_width: 20,
           align: 'center',
           valign: 'middle',
@@ -147,8 +157,8 @@ export default {
           }
         },
         {
-          field: 'tagText',
-          title: 'tagText',
+          field: 'enable',
+          title: 'enable',
           min_width: 20,
           align: 'center',
           valign: 'middle',
@@ -157,8 +167,8 @@ export default {
           }
         },
         {
-          field: 'soldRate',
-          title: '已售',
+          field: 'start_at',
+          title: 'start_at',
           min_width: 20,
           align: 'center',
           valign: 'middle',
@@ -167,28 +177,8 @@ export default {
           }
         },
         {
-          field: 'miaoSha',
-          title: 'miaoSha',
-          min_width: 20,
-          align: 'center',
-          valign: 'middle',
-          formatter: function (value, row, index) {
-            return value
-          }
-        },
-        {
-          field: 'rate',
-          title: '折扣',
-          min_width: 20,
-          align: 'center',
-          valign: 'middle',
-          formatter: function (value, row, index) {
-            return value
-          }
-        },
-        {
-          field: 'startRemainTime',
-          title: 'startRemainTime',
+          field: 'stop_at',
+          title: 'stop_at',
           min_width: 20,
           align: 'center',
           valign: 'middle',

@@ -54,6 +54,7 @@ func autoMigrate(model Inmodel) {
 func AutoMigrate() {
 
 	autoMigrate(&JdUser{})
+	autoMigrate(&PanicBuying{})
 
 }
 
@@ -62,6 +63,7 @@ func CreateTrigger(db *gorm.DB) {
 		db = getDb()
 	}
 	createTrigger(db, (&JdUser{}).TableName(), "delete_name", "name")
+	createTrigger(db, (&PanicBuying{}).TableName(), "delete_name", "name")
 }
 
 func InserInitData(_force bool) {

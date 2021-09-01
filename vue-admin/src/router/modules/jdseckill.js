@@ -35,6 +35,16 @@ const jdSecKillRouter = {
         icon: 'tree',
         roles: ['admin','jdkill']
       }
+    },
+    {
+      path: 'panicBuying',
+      name: 'ItemInfo',
+      component: () => import('@/views/jdseckill/panicBuyingList/index'),
+      meta: {
+        title: '抢购设置',
+        icon: 'tree',
+        roles: ['admin','jdkill']
+      }
     }
   ]
 }

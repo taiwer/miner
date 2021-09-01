@@ -8,7 +8,7 @@ import (
 
 //节点表
 type JdUser struct {
-	Id              int64
+	Id              int64  `json:"id"`
 	Username        string `gorm:"unique;size(32)" json:"username"`
 	Password        string `gorm:"size(32)" json:"password"`
 	Nickname        string `gorm:"unique;size(32)" json:"nickname"`
