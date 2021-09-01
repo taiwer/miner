@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Albert-Zhan/httpc"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/chromedp"
+	"github.com/taiwer/miner/common/myutils"
 	"log"
 	"net/http"
 	"strings"
@@ -16,10 +16,47 @@ import (
 //预约商品
 
 type ProductInfo struct {
-	Title    string
-	Price    string
-	DownTime string //抢购时间
-	DownGo   string //抢购距离
+	Id            string
+	Title         string
+	Price         string
+	DownStartTime string //抢购时间
+	DownEndTime   string //抢购距离
+	IsRuning      bool   //是否已经在抢购
+}
+
+//监听收藏商品 时间到了自动抢购
+func (s *Seckill) GoTickPreserve() {
+	ctx, _ := context.WithCancel(s.ctx)
+	tick := time.NewTicker(time.Second * 10)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+			s.GetReserveList()
+			s.checkDoSeckill()
+		}
+	}
+}
+
+//检查产品是否需要秒杀
+func (s *Seckill) checkDoSeckill() {
+	nowTime := time.Now().UTC().Add(time.Hour * 8)
+	for _, v := range s.reserveList {
+		pTime, _ := time.Parse("2006-01-02 15:04:05", v.DownStartTime)
+		subTime := pTime.Sub(nowTime) / time.Second
+		if subTime <= 10 { //提前10秒开枪
+			if !v.IsRuning {
+				v.IsRuning = true
+				s.startSeckill(v.Id, 1)
+			}
+		} else {
+			if subTime < 3600*24 {
+				log.Println(v.DownStartTime, "等待时间", myutils.FormatTimeDuration(int64(subTime)), v.Title)
+			}
+		}
+	}
 }
 
 func (s *Seckill) GetHttpHtmlContent(url string, selector string, sel interface{}) (string, error) {
@@ -71,8 +108,7 @@ func (s *Seckill) GetHttpHtmlContent(url string, selector string, sel interface{
 //获取预约商品列表
 func (s *Seckill) GetReserveList() (string, error) {
 	//s.GetHttpHtmlContent("https://yushou.jd.com/member/qualificationList.action", "body", `document.querySelector("body")`)
-	req := httpc.NewRequest(s.client)
-	req.SetHeader("User-Agent", s.conf.Read("config", "DEFAULT_USER_AGENT"))
+	req := s.NewRequest()
 	req.SetHeader("Referer", "https://order.jd.com/center/list.action")
 	req.SetUrl("https://yushou.jd.com/member/qualificationList.action")
 	req.SetMethod("get")
@@ -85,20 +121,34 @@ func (s *Seckill) GetReserveList() (string, error) {
 	html := strings.NewReader(body)
 	doc, _ := goquery.NewDocumentFromReader(html)
 	elem := doc.Find(".cont-box")
-	itemList := make([]string, 0)
-	for k, node := range elem.Nodes {
+	productList := []*ProductInfo{}
+	for _, node := range elem.Nodes {
 		var productInfo ProductInfo
-		product := goquery.NewDocumentFromNode(node).Find(".product-info")
-		//nPrice :=product.Find(".prod-price")
-		//productInfo.Price = elem.Text()
+		product := goquery.NewDocumentFromNode(node)
 		productInfo.Title = product.Find(".prod-title").Text()
 		//<input type="hidden" id="100011553443_buystime" value="2021-08-31 15:00:00">
 		//<input type="hidden" id="100011553443_buyetime" value="2021-08-31 17:00:00">
-		productInfo.DownTime = product.Find(".down-time").Text()
-		productInfo.DownGo = product.Find(".down-go").Text()
-
-		text := fmt.Sprintf("%d 商品名称:[%s] price:[%s] Time:[%s]Go:[%s]", k,
-			productInfo.Title, productInfo.Price, productInfo.DownTime, productInfo.DownGo)
+		id := myutils.GetBetweenStr(product.Text(), "loadSkuPrice('", "'")
+		productInfo.Id = id
+		priceList := s.GetPrices(id)
+		if len(priceList) > 0 {
+			productInfo.Price = priceList[0].P
+		}
+		inputs := product.Find("#" + id + "_buystime")
+		productInfo.DownStartTime, _ = inputs.Attr("value")
+		inputs = product.Find("#" + id + "_buyetime")
+		productInfo.DownEndTime, _ = inputs.Attr("value")
+		productList = append(productList, &productInfo)
+	}
+	for _, v := range productList {
+		if _, ok := s.reserveList[v.Id]; !ok {
+			s.reserveList[v.Id] = v
+		}
+	}
+	itemList := make([]string, 0)
+	for k, productInfo := range productList {
+		text := fmt.Sprintf("%d Id:%s 商品名称:[%s] price:[%s] sTime:[%s] eTime:[%s]", k,
+			productInfo.Id, productInfo.Title, productInfo.Price, productInfo.DownStartTime, productInfo.DownEndTime)
 		itemList = append(itemList, text)
 	}
 	text := "\n" + strings.Join(itemList, "\n")

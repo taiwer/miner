@@ -56,10 +56,15 @@
           <span style="margin-right:18px;">Username : editor</span>
           <span>Password : any</span>
         </div>
+        <div class="thirdparty-button">
+          <el-button class=".thirdparty-button" type="primary" @click="showDialog=true">
+            Sign Up
+          </el-button>
+          <el-button class=".thirdparty-button" type="primary" ref="dialogJd" @click="QRScanJd">
+            扫码登录JD
+          </el-button>
+        </div>
 
-        <el-button class="thirdparty-button" type="primary" @click="showDialog=true">
-          Sign Up
-        </el-button>
       </div>
     </el-form>
 
@@ -68,6 +73,12 @@
         :show-dialog="showDialog"
       />
     </el-dialog>
+    <el-dialog title="扫码登录" :visible.sync="showDialogJd">
+        <jd-login
+            ref="dialogJd"
+            :show-dialog="showDialogJd"
+        />
+    </el-dialog>
   </div>
 </template>
 
@@ -75,10 +86,11 @@
 
 import { sleep } from '@/utils/auth'
 import SignUp from './components/signUp'
+import JdLogin from './components/jdLogin'
 import { Message } from 'element-ui'
 export default {
   name: 'Login',
-  components: { SignUp },
+  components: { SignUp ,JdLogin},
   data () {
     const validateUsername = (rule, value, callback) => {
       callback()
@@ -106,6 +118,7 @@ export default {
       capsTooltip: false,
       loading: false,
       showDialog: false,
+      showDialogJd: false,
       redirect: undefined,
       otherQuery: {}
     }
@@ -178,25 +191,11 @@ export default {
         }
         return acc
       }, {})
+    },
+    QRScanJd() {
+      this.showDialogJd=true
+      this.$refs.dialogJd.getQrLogin()
     }
-    // afterQRScan() {
-    //   if (e.key === 'x-admin-oauth-code') {
-    //     const code = getQueryObject(e.newValue)
-    //     const codeMap = {
-    //       wechat: 'code',
-    //       tencent: 'code'
-    //     }
-    //     const type = codeMap[this.auth_type]
-    //     const codeName = code[type]
-    //     if (codeName) {
-    //       this.$store.dispatch('LoginByThirdparty', codeName).then(() => {
-    //         this.$router.push({ path: this.redirect || '/' })
-    //       })
-    //     } else {
-    //       alert('第三方登录失败')
-    //     }
-    //   }
-    // }
   }
 }
 </script>

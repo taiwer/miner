@@ -1,6 +1,7 @@
 package seckill
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/Albert-Zhan/httpc"
@@ -16,16 +17,40 @@ import (
 
 type Seckill struct {
 	Request
+	ctx         context.Context
+	cancel      context.CancelFunc
+	reserveList map[string]*ProductInfo
 }
 
 func NewSeckill() *Seckill {
-	seckill := &Seckill{}
+	seckill := &Seckill{reserveList: make(map[string]*ProductInfo, 0)}
+	seckill.ctx, seckill.cancel = context.WithCancel(context.Background())
 	seckill.Request.Init()
 	return seckill
 }
 
-func (this *Seckill) SkuTitle() (string, error) {
-	skuId := this.conf.Read("config", "sku_id")
+func (this *Seckill) startSeckill(skuid string, taskNum int) {
+	for i := 1; i <= taskNum; i++ {
+		go func() {
+			ctx, _ := context.WithCancel(this.ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if this.RequestSeckillUrl(skuid) {
+						this.SeckillPage(skuid)
+						this.SubmitSeckillOrder(skuid, "")
+					}
+				}
+			}
+		}()
+	}
+}
+
+func (this *Seckill) SkuTitle(skuId string) (title, action string, err error) {
+	//skuId := this.conf.Read("config", "sku_id")
+	//https://item.m.jd.com/product/100011483893.html?from=qrcode
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", "https://order.jd.com/center/list.action")
@@ -33,21 +58,26 @@ func (this *Seckill) SkuTitle() (string, error) {
 	resp, body, err := req.Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("访问商品详情失败")
-		return "", errors.New("访问商品详情失败")
+		return "", "", errors.New("访问商品详情失败")
 	}
 	html := strings.NewReader(body)
 	doc, _ := goquery.NewDocumentFromReader(html)
-	return strings.TrimSpace(doc.Find(".sku-name").Text()), nil
+	title = strings.TrimSpace(doc.Find(".sku-name").Text())
+	action = strings.TrimSpace(doc.Find("#btn-reservation").Text())
+	return title, action, nil
 }
 
-func (this *Seckill) MakeReserve() {
-	shopTitle, err := this.SkuTitle()
+func (this *Seckill) MakeReserve(skuId string) {
+	if skuId == "" {
+		skuId = this.conf.Read("config", "sku_id")
+	}
+	shopTitle, action, err := this.SkuTitle(skuId)
 	if err != nil {
 		log.Println("获取商品信息失败")
 	} else {
-		log.Println("商品名称:" + shopTitle)
+		log.Println("商品名称:"+shopTitle, action)
 	}
-	skuId := this.conf.Read("config", "sku_id")
+	//skuId := this.conf.Read("config", "sku_id")
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
@@ -87,35 +117,41 @@ func (this *Seckill) getSeckillUrl() (string, error) {
 	return url, nil
 }
 
-func (this *Seckill) RequestSeckillUrl() bool {
+func (this *Seckill) RequestSeckillUrl(skuId string) bool {
 	userInfo, err := this.GetUserInfo()
 	if err != nil {
 		log.Println("获取用户信息失败")
 	} else {
 		log.Println("用户:" + userInfo)
 	}
-	shopTitle, err := this.SkuTitle()
+	shopTitle, action, err := this.SkuTitle(skuId)
 	if err != nil {
 		log.Println("获取商品信息失败")
 	} else {
-		log.Println("商品名称:" + shopTitle)
+		log.Println("商品名称:"+shopTitle, action)
 	}
-	url, _ := this.getSeckillUrl()
-	if url != "" {
-		skuId := this.conf.Read("config", "sku_id")
-		req := httpc.NewRequest(this.client)
-		req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
-		req.SetHeader("Host", "marathon.jd.com")
-		req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
-		_, _, _ = req.SetUrl(url).SetMethod("get").Send().End()
+	if action == "抢购" {
 		return true
+	} else {
+		return false
 	}
-	return false
+	//url, _ := this.getSeckillUrl()
+	//if url != "" {
+	//	if skuId == "" {
+	//		skuId = this.conf.Read("config", "sku_id")
+	//	}
+	//	req := httpc.NewRequest(this.client)
+	//	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
+	//	req.SetHeader("Host", "marathon.jd.com")
+	//	req.SetHeader("Referer", fmt.Sprintf("https://item.jd.com/%s.html", skuId))
+	//	_, _, _ = req.SetUrl(url).SetMethod("get").Send().End()
+	//	return true
+	//}
+	//return false
 }
 
-func (this *Seckill) SeckillPage() {
+func (this *Seckill) SeckillPage(skuId string) {
 	log.Println("访问抢购订单结算页面...")
-	skuId := this.conf.Read("config", "sku_id")
 	seckillNum := this.conf.Read("config", "seckill_num")
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
@@ -125,10 +161,14 @@ func (this *Seckill) SeckillPage() {
 	_, _, _ = req.Send().End()
 }
 
-func (this *Seckill) SeckillInitInfo() (string, error) {
+func (this *Seckill) SeckillInitInfo(skuId, seckillNum string) (string, error) {
 	log.Println("获取秒杀初始化信息...")
-	skuId := this.conf.Read("config", "sku_id")
-	seckillNum := this.conf.Read("config", "seckill_num")
+	if skuId == "" {
+		skuId = this.conf.Read("config", "sku_id")
+	}
+	if seckillNum == "" {
+		seckillNum = this.conf.Read("config", "seckill_num")
+	}
 	req := httpc.NewRequest(this.client)
 	req.SetHeader("User-Agent", this.conf.Read("config", "DEFAULT_USER_AGENT"))
 	req.SetHeader("Host", "marathon.jd.com")
@@ -144,13 +184,17 @@ func (this *Seckill) SeckillInitInfo() (string, error) {
 	return body, nil
 }
 
-func (this *Seckill) SubmitSeckillOrder() bool {
+func (this *Seckill) SubmitSeckillOrder(skuId, seckillNum string) bool {
+	if skuId == "" {
+		skuId = this.conf.Read("config", "sku_id")
+	}
+	if seckillNum == "" {
+		seckillNum = this.conf.Read("config", "seckill_num")
+	}
 	eid := this.conf.Read("config", "eid")
 	fp := this.conf.Read("config", "fp")
-	skuId := this.conf.Read("config", "sku_id")
-	seckillNum := this.conf.Read("config", "seckill_num")
 	paymentPwd := this.conf.Read("account", "payment_pwd")
-	initInfo, _ := this.SeckillInitInfo()
+	initInfo, _ := this.SeckillInitInfo(skuId, seckillNum)
 	address := gjson.Get(initInfo, "addressList").Array()
 	defaultAddress := address[0]
 	isinvoiceInfo := gjson.Get(initInfo, "invoiceInfo").Exists()

@@ -19,8 +19,9 @@ const mutations = {
     setToken(token)
   },
   SET_TOKENEXPIRE: (state, expire) => {
-    state.tokenExpire = expire
-    setTokenExpire(expire)
+    console.log('SET_TOKENEXPIRE ' + expire)
+   // state.tokenExpire = expire
+   // setTokenExpire(expire)
   },
   SET_INTRODUCTION: (state, introduction) => {
     state.introduction = introduction
@@ -144,6 +145,10 @@ const actions = {
       removeTokenExpire()
       resolve()
     })
+  },
+
+  setToken ({ commit }, token) {
+    commit('SET_TOKEN', token)
   },
 
   // dynamically modify permissions

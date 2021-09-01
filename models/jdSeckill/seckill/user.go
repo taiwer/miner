@@ -16,6 +16,7 @@ import (
 )
 
 const cookieFile = "./conf/cookie.ini"
+const QrImgPath = "./static/qrimg"
 
 func (this *Seckill) loginPage() {
 	req := this.NewRequest()
@@ -40,6 +41,14 @@ func (this *Seckill) LoadCookie(unick string) (bool, error) {
 	return false, err
 }
 
+func (this *Seckill) SetToken(thor string) bool {
+	if thor != "" {
+		this.cookieJar.SetCookies(&url.URL{Host: "jd.com", Scheme: "https"}, []*http.Cookie{&http.Cookie{Name: "thor", Value: thor, Path: "/", Domain: "jd.com"}})
+		return true
+	}
+	return false
+}
+
 func (this *Seckill) QrLogin() (string, error) {
 	//登录页面
 	this.GetReserveList()
@@ -47,7 +56,10 @@ func (this *Seckill) QrLogin() (string, error) {
 	//二维码登录
 	req := this.NewRequest()
 	req.SetHeader("Referer", "https://passport.jd.com/new/login.aspx")
-	resp, err := req.SetUrl("https://qr.m.jd.com/show?appid=133&size=147&t="+strconv.Itoa(int(time.Now().Unix()*1000))).SetMethod("get").Send().EndFile("./", "qr_code.png")
+	req.SetUrl("https://qr.m.jd.com/show?appid=133&size=147&t=" + strconv.Itoa(int(time.Now().Unix()*1000))).SetMethod("get").Send()
+	imgFile := fmt.Sprintf("%d.img", time.Now().UnixNano()/1000)
+	os.MkdirAll(QrImgPath, os.ModePerm)
+	resp, err := req.EndFile(QrImgPath, imgFile)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("获取二维码失败")
 		return "", errors.New("获取二维码失败")
@@ -61,12 +73,12 @@ func (this *Seckill) QrLogin() (string, error) {
 		}
 	}
 	log.Println("二维码获取成功，请打开京东APP扫描")
-	dir, _ := os.Getwd()
-	OpenImage(dir + "/qr_code.png")
+	log.Println(wlfstkSmdl)
+	os.Rename(QrImgPath+imgFile, QrImgPath+"/"+wlfstkSmdl+".png")
 	return wlfstkSmdl, nil
 }
 
-func (this *Seckill) QrcodeTicket(wlfstkSmdl string) (string, error) {
+func (this *Seckill) QrcodeTicket(wlfstkSmdl string) (code int64, msg string, ticket string, err error) {
 	req := this.NewRequest()
 	req.SetHeader("Referer", "https://passport.jd.com/new/login.aspx")
 	params := []string{}
@@ -77,23 +89,26 @@ func (this *Seckill) QrcodeTicket(wlfstkSmdl string) (string, error) {
 	resp, body, err := req.SetUrl("https://qr.m.jd.com/check?appid=133&" + strings.Join(params, "&")).SetMethod("get").Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("获取二维码扫描结果异常")
-		return "", errors.New("获取二维码扫描结果异常")
+		return int64(resp.StatusCode), "", "", errors.New("获取二维码扫描结果异常")
 	}
-	if gjson.Get(body, "code").Int() != 200 {
-		log.Printf("Code: %s, Message: %s", gjson.Get(body, "code").String(), gjson.Get(body, "msg").String())
-		return "", errors.New(fmt.Sprintf("Code: %s, Message: %s", gjson.Get(body, "code").String(), gjson.Get(body, "msg").String()))
-	}
+	code = gjson.Get(body, "code").Int()
+	msg = gjson.Get(body, "msg").String()
+	//if gjson.Get(body, "code").Int() != 200 {
+	//	log.Printf("Code: %s, Message: %s", gjson.Get(body, "code").String(), gjson.Get(body, "msg").String())
+	//	return code, msg, ticket, errors.New(fmt.Sprintf("Code: %s, Message: %s", gjson.Get(body, "code").String(), gjson.Get(body, "msg").String()))
+	//}
+	ticket = gjson.Get(body, "ticket").String()
 	log.Println("已完成手机客户端确认")
-	return gjson.Get(body, "ticket").String(), nil
+	return code, msg, ticket, nil
 }
 
-func (this *Seckill) TicketInfo(ticket string) (string, error) {
+func (this *Seckill) TicketInfo(ticket string) (thor, unick string, err error) {
 	req := this.NewRequest()
 	req.SetHeader("Referer", "https://passport.jd.com/uc/login?ltype=logout")
 	resp, body, err := req.SetUrl("https://passport.jd.com/uc/qrCodeTicketValidation?t=" + ticket).SetMethod("get").Send().End()
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Println("二维码信息校验失败")
-		return "", errors.New("二维码信息校验失败")
+		return "", "", errors.New("二维码信息校验失败")
 	}
 	if gjson.Get(body, "returnCode").Int() == 0 {
 		log.Println("二维码信息校验成功")
@@ -124,10 +139,10 @@ func (this *Seckill) TicketInfo(ticket string) (string, error) {
 			config.SetValue("thor", unick, thor)
 			goconfig.SaveConfigFile(config, cookieFile)
 		}
-		return "", nil
+		return thor, unick, nil
 	} else {
 		log.Println("二维码信息校验失败")
-		return "", errors.New("二维码信息校验失败")
+		return "", "", errors.New("二维码信息校验失败")
 	}
 }
 

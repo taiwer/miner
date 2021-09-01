@@ -73,6 +73,13 @@ func AddUser(u *User, args map[string]interface{}) (int64, error) {
 	return dbOrm.Add(u)
 }
 
+func AddUserCheck(u *User, args map[string]interface{}) (int64, error) {
+	if user := GetUserByName(u.Username); user != nil {
+		return 0, nil
+	}
+	return dbOrm.Add(u)
+}
+
 func DelUserById(Id int64) (int64, error) {
 	where := fmt.Sprintf("id=%d", Id)
 	return dbOrm.DelByWhere(&User{}, where)

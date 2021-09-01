@@ -4,6 +4,7 @@ import (
 	"fmt"
 	jwt "github.com/taiwer/miner/common/middleware/jwt"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/taiwer/miner/common/codes"
@@ -44,8 +45,12 @@ func (s *BaseController) GetUserName(c *gin.Context) string {
 //获取用户角色
 func (s *BaseController) GetUserRoles(c *gin.Context) []string {
 	userRoles := []string{} //规则
-	if userName := s.GetUserName(c); userName == "admin" {
+	userName := s.GetUserName(c)
+	if userName == "admin" {
 		userRoles = append(userRoles, "admin")
+	}
+	if strings.HasPrefix(userName, "Jd_") {
+		userRoles = append(userRoles, "jdkill") //京东秒杀
 	}
 	userRoles = append(userRoles, "user") //默认
 	return userRoles
@@ -108,4 +113,8 @@ func (s *BaseController) GetPage(c *gin.Context) (page, pagesize int) {
 
 func (s *BaseController) GetUpLoadFilePath() string {
 	return "../up_load_file/"
+}
+
+func (s *BaseController) GetImgFilePath() string {
+	return "../img/"
 }

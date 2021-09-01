@@ -3,13 +3,13 @@ package jwt
 import (
 	"crypto/rsa"
 	"errors"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
+	"github.com/taiwer/miner/common/middleware/models"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 )
 
 // MapClaims type that uses the map[string]interface{} for JSON decoding
@@ -440,17 +440,18 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 		mw.unauthorized(c, http.StatusUnauthorized, mw.HTTPStatusMessageFunc(err, c))
 		return
 	}
+	mw.SetLoginSuccessResponse(c, data.(*models.UserRole))
+}
 
+func (mw *GinJWTMiddleware) SetLoginSuccessResponse(c *gin.Context, data *models.UserRole) {
 	// Create the token
 	token := jwt.New(jwt.GetSigningMethod(mw.SigningAlgorithm))
 	claims := token.Claims.(jwt.MapClaims)
-
 	if mw.PayloadFunc != nil {
 		for key, value := range mw.PayloadFunc(data) {
 			claims[key] = value
 		}
 	}
-
 	expire := mw.TimeFunc().Add(mw.Timeout)
 	claims["exp"] = expire.Unix()
 	claims["orig_iat"] = mw.TimeFunc().Unix()
@@ -480,7 +481,6 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 			mw.CookieHTTPOnly,
 		)
 	}
-
 	mw.LoginResponse(c, http.StatusOK, tokenString, expire)
 }
 

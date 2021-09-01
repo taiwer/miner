@@ -9,6 +9,7 @@ import Layout from '@/layout'
 /* Router Modules */
 import GoPlotRouter from './modules/goPlot'
 import ExampleRouter from './modules/example'
+import jdSecKillRouter from "./modules/jdseckill";
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -130,6 +131,7 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
   GoPlotRouter,
+  jdSecKillRouter,
   ExampleRouter,
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }

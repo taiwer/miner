@@ -216,7 +216,30 @@ export default {
   methods: {
     getList () {
       console.log('this.tableData', this.tableData)
+      if (this.getData !== undefined) {
+        console.log('do getData')
+        this.listQuery.fiter = this.fiter
+        this.listLoading = true
+        this.listQuery.offset = this.listQuery.limit * this.listQuery.page - this.listQuery.limit
+        this.getData(this.listQuery).then(response => {
+          console.log(response)
+          this.list = response.data.Rows
+          this.total = response.data.Total
+          this.list = this.list.map(v => {
+            this.$set(v, 'edit', false) // https://vuejs.org/v2/guide/reactivity.html
+            return v
+          })
+          this.listLoading = false
+        }).catch(error => {
+          this.list = []
+          this.total = 0
+          Message.error({ message: error })
+          this.listLoading = false
+        })
+        return
+      }
       if (this.tableData !== undefined) {
+        console.log('do tableData ' + this.tableData.length)
         this.listLoading = true
         this.list = this.tableData
         this.total = this.tableData.length
@@ -224,27 +247,10 @@ export default {
           this.$set(v, 'edit', false)
           return v
         })
+        Message.info('success ' + this.tableData.length)
         this.listLoading = false
         return
       }
-      this.listQuery.fiter = this.fiter
-      this.listLoading = true
-      this.listQuery.offset = this.listQuery.limit * this.listQuery.page - this.listQuery.limit
-      this.getData(this.listQuery).then(response => {
-        console.log(response)
-        this.list = response.data.Rows
-        this.total = response.data.Total
-        this.list = this.list.map(v => {
-          this.$set(v, 'edit', false) // https://vuejs.org/v2/guide/reactivity.html
-          return v
-        })
-        this.listLoading = false
-      }).catch(error => {
-        this.list = []
-        this.total = 0
-        Message.error({ message: error })
-        this.listLoading = false
-      })
     },
     onExpandRow: function (index, row, $detail) {
     },

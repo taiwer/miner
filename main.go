@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/taiwer/miner/common/dbJd"
 	"github.com/taiwer/miner/common/dbManager"
 	"github.com/taiwer/miner/common/dbOrm"
 	"github.com/taiwer/miner/common/dbPlotOpr"
 	"github.com/taiwer/miner/common/logger"
 	"github.com/taiwer/miner/common/rbacModel"
 	"github.com/taiwer/miner/common/settings"
-	"github.com/taiwer/miner/models/jdSeckill"
 	"github.com/taiwer/miner/routers"
 	"go.uber.org/zap"
 	"log"
@@ -50,6 +50,7 @@ func main() {
 				rbacModel.Syncdb(false)
 				//自动构建数据表
 				dbPlotOpr.Syncdb(false)
+				dbJd.Syncdb(false)
 			default:
 			}
 		}
@@ -71,7 +72,7 @@ func main() {
 	}
 	router.Use(logger.GinLogger(), logger.GinRecovery(true))
 	go s.ListenAndServe()
-	jdSeckill.RunSeckill()
+	//jdSeckill.RunSeckill()
 	select {}
 	log.Println("exit")
 }

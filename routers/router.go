@@ -7,6 +7,7 @@ import (
 	"github.com/taiwer/miner/common/settings"
 	"github.com/taiwer/miner/controller"
 	"github.com/taiwer/miner/controller/adminController"
+	"github.com/taiwer/miner/controller/jdController"
 	"github.com/taiwer/miner/controller/staticController"
 )
 
@@ -25,10 +26,13 @@ func InitRouter(conf *settings.App) *gin.Engine {
 func Configure(r *gin.Engine) {
 	//controller declare
 	var cUser controller.User
+	var cQrLogin adminController.QrLoginController
 	var cGlobal adminController.GlobalListController
 
 	var cDownLoad staticController.DownLoadController
 	var cUpLoadFile adminController.UpLoadFileController
+
+	var cJdMiaoshaList jdController.MiaoShaListController
 	//var tag cv1.Tag
 	var myjwt jwt.JWT
 	//inject declare
@@ -36,6 +40,8 @@ func Configure(r *gin.Engine) {
 	r.NoRoute(authMiddleware.MiddlewareFunc(), jwt.NoRouteHandler) //404页面
 	r.POST("/login", authMiddleware.LoginHandler)
 	r.POST("/user/sign_up", cUser.SignUp)
+	r.POST("/user/qr_login/command", cQrLogin.Command) //扫码登录
+	r.GET("/user/qr_login/get_img", cQrLogin.GetImg)   //获取登录二维码图片
 	r.GET("/static/download", cDownLoad.DownLoad)
 	userAPI := r.Group("/user")
 	{
@@ -71,5 +77,11 @@ func Configure(r *gin.Engine) {
 		apiv1.GET("/up_load_file/list", cUpLoadFile.List)
 		apiv1.GET("/up_load_file/list_select", cUpLoadFile.ListSelect)
 		apiv1.POST("/up_load_file/up_load", cUpLoadFile.UpLoad)
+
+		apiv1.POST("/jd/miaosha_list/command", cJdMiaoshaList.Command)
+		apiv1.POST("/jd/miaosha_list/create", cJdMiaoshaList.Create)
+		apiv1.DELETE("/jd/miaosha_list/del:id", cJdMiaoshaList.Del)
+		apiv1.PUT("/jd/miaosha_list/update", cJdMiaoshaList.Update)
+		apiv1.GET("/jd/miaosha_list/list", cJdMiaoshaList.List)
 	}
 }

@@ -46,3 +46,29 @@ func (s *DownLoadController) DownLoad(c *gin.Context) {
 	zap.L().Info("DownLoad File " + destFile)
 	c.File(destFile)
 }
+
+func (s *DownLoadController) Img(c *gin.Context) {
+	args := make(map[string]interface{})
+	c.ShouldBind(&args)
+	zap.L().Info("Del",
+		zap.Any("request", c.Request.Form),
+		zap.Any("args", args),
+	)
+	fileName := c.Request.Form.Get("fileName")
+	if fileName == "" {
+		s.RespData(c, http.StatusNotFound, 0, "err fileName is null")
+		return
+	}
+	//	destFile := s.GetUpLoadFilePath() + fileName
+	//	if buf, err := ioutil.ReadFile(destFile); err == nil {
+	//		bufs := strings.ReplaceAll(string(buf), "10.211.55.2", dbPlotOpr.GetGlobalText("WebHost"))
+	//		c.Writer.Write([]byte(bufs))
+	//	} else {
+	//		s.RespData(c, http.StatusNotFound, 0, "404")
+	//	}
+	//	return
+	//}
+	destFile := s.GetUpLoadFilePath() + fileName
+	zap.L().Info("DownLoad File " + destFile)
+	c.File(destFile)
+}

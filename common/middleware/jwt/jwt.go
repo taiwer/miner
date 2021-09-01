@@ -3,7 +3,7 @@ package jwt
 import (
 	"encoding/json"
 	jwt "github.com/appleboy/gin-jwt/v2"
-	"github.com/bingjian-zhu/gin-vue-admin/models"
+	"github.com/taiwer/miner/common/middleware/models"
 	"github.com/taiwer/miner/common/myutils"
 	"github.com/taiwer/miner/common/rbacModel"
 	"github.com/taiwer/miner/common/settings"
